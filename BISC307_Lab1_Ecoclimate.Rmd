@@ -134,7 +134,7 @@ Repeat the steps that we used here to calculate and visualize the 30-year climat
 Next, we'll calculate the difference between the weather data values of daily maximum temperature and the climatological 30-year mean maximum temperature. The first step to doing this is to attach a column with the 30-year mean values for each date onto the original climate data frame. We'll use the `left_join()` function to connect the 30-year climatology by matching up the day-month in both datasets. We'll learn more about `joins` in detail later on in this class. Then, we'll use `mutate()` to make a new column that is tmax - tmax_mean to represent the difference between the actual temperature and the 30-year mean temperature on that day. 
 
 ```{r}
-# Join 30-year mean daily max temp to all yearly data
+# Join 30-year mean daily max temp to all yearly data and calculate difference
 BOS_climatology <- BOS_climate %>%
   filter(year(date) > 1980 & year(date) < 2011) %>%
   mutate(month_day = format(date, "%m-%d")) %>%
@@ -148,11 +148,25 @@ ggplot(data = BOS_climatology) +
 
 ```
 
-***
-**Code Challenge 3:
-Repeat the steps that we used here to calculate and visualize the difference between the daily maximum tempearture and the 30-year climatological mean daily maximum temperature for Phoenix.**
+Now let's do the same steps to calculate the Phoenix daily departures in maximum temperature from the 30-year climatology: 
 
-***
+```{r}
+# Summarize 30-year 1981-2010 max temperature
+PHO_tmaxClimatology <- PHO_climate %>%
+  filter(year(date) > 1980 & year(date) < 2011) %>%
+  mutate(month_day = format(date, "%m-%d")) %>%
+  group_by(month_day) %>%
+  summarize(tmax_mean = mean(tmax, na.rm=TRUE))
+
+# Join 30-year mean daily max temp to all yearly data and calculate difference
+PHO_climatology <- PHO_climate %>%
+  filter(year(date) > 1980 & year(date) < 2011) %>%
+  mutate(month_day = format(date, "%m-%d")) %>%
+  left_join(PHO_tmaxClimatology, by = "month_day") %>%
+  mutate(tmax_diff = tmax - tmax_mean)
+
+```
+
 
 ### 3. Weather predictability
 
@@ -171,9 +185,143 @@ ggplot(data = BOS_climatology) +
 This plot shows that in Boston, there about a 0.4% chance of having a day that is 20 degrees warmer or colder than average. This is a rather small, but non-negligible, probability. We can use the probability density for Boston maximum temperature departures as a benchmark to assess whether Phoenix's maximum temperatures are more or less predictable than Boston's. 
 
 ***
-**Code Challenge 4:
+**Code Challenge 3:
 Produce a plot that shows the probability density for the difference between daily maximum tempearture and the 30-year climatological mean for Phoenix. From comparing the probability densities of maximum temperature departures for Boston and Phoenix, which city is more likely to experience an abnormally hot day?**
 
 ***
 
+### 4. Individually Exerienced Temperatures (IETs) & reading .csv files into R
+Now we'll pivot to investgiating a dataset of Individually Exerienced Temperatures (IETs) from the [Central Arizona-Phoenix (CAP) Long-Term Ecological Research (LTER) site](https://sustainability.asu.edu/caplter/). You can read more details about the functions that we'll use here in the sections on Data Transformation, [Sections 5.1-5.6 from the R for Data Science book](http://r4ds.had.co.nz/transform.html). 
+
+The IETs data are stored as `.csv` files, which stands for comma-separated values. `csv` files are a plain text format for storing tabular data, such as spreadsheets, and because they are plain text (e.g. in contrast to an Excel workbook) they are smaller, much more portable across computer platforms, and generally easier to work with. If you open a `csv` file with a plain text editor, like WordPad on Windows or textEdit on a Mac, you'll see rows of data where each column is separated by a comma. You can also open `csv` files with Excel or Google sheets, where they are usually automatically converted into separate columns. Importantly, you can also store Excel and Google sheets as `csv` files, which is the generally preferred long-term storage format for reproducible research because it is plain text and more stable as versions of Excel and Google sheets softwares change.
+
+To load a csv file into Rstudio, we'll use the `read_csv()` function from the `tidyverse`. R also has a base function called `read.csv()` that doesn't require the `tidyverse` package, but `read_csv()` has a few advantages over the base function. Helpfully, `read_csv()` preserves data classes, recognizes dates and times, and automatically loads data as tibbles (rather than unformatted data frames).
+
+The IETs dataset is comprised of five csv files, and you can read more about each file in the metadata within the `IET_metadata.txt` file included in the `data/` directory of the .zip folder for this week. The metadata contains important information that is necessary for interpreting the data, for example the meaning of column names, units for numeric values, etc. These exercises will only work with two of the csv files from this dataset - the main IET dataset and the background participant survey - but you can use the other files, if you'd like, for your independent investigation for your lab assignment. For now, let's load the two csv files that we'll be working with.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# We'll use the stringr library to separate some of the column data
+library(stringr)
+
+# Read IETs csv file into tibble called `IETs`
+IETs <- read_csv("data/647_IET_measurements_50e72be656c7407bd07e316061beeb1d.csv")
+
+# Read background survey csv file into tibble called `Bkgd`
+Bkgd <- read_csv("data/647_background_surveys_546a5d337c7a39922a4b65ced4bb29fe.csv")
+
+# Look at the IETs and Bkgd tibbles to see what the data look like
+IETs
+Bkgd
+```
+
+The two data frames are linked by the `Subject ID`, and if you read the `IET_metadata.txt` file, you'll learn that the first number in each `Subject ID` corresponds to a neighborhood, and the letter corresponds to each unique study participant from that neighborhood. The columns in the IETs data frame are rather straightforward to interpret, but there are LOTS of data columns in the Bkgd data frame that correspond to survey answers for individual questions. We'll focus on three of these later on in this lab, but you'll need to read the metadata if you'd like to use information from additional questions.  
+
+### 5. Visualizing differences in IETs by neighborhood and time of day 
+
+First we'll examine the differences in IETs grouped by neighborhood. We need to use the tidyverse Data Transformation verbs to get the data in the right format. The IETs column for `Subject ID` includes the neighborhood, but is also stuck to the participant ID within each neighborhood. If we want to group data by neighborhood, we need to use `mutate()` to create a new data frame column with JUST neighborhood, and while we're at it, we'll also create a new column with just participant ID. 
+
+To separate out the neighborhood piece of the `Subject ID` from the participant ID, we'll use a function called string subset - `str_sub()` from the `stringr` tidyverse package - that clips a string (set of letters or characters) based on the numeric order of letters within that string. For example, the `Subject ID` string in the first row of the IETs tibble is `1A`, where we want to clip out the first character `1` into the new neighborhood column and the second character `A` into the new ID column. 
+
+We'll use these `stringr` functions in this lab, but you shouldn't worry about understanding all the details: the main point of this lab is to focus on the use of the data transformation verbs, but we can't avoid cleaning things up with stringr in order to use this dataset. Remember that learning R is like learning a new language, and you can think about the stringr commands in this lab as an immersion experience where you might not understand every detail, but can focus on the purpose of how these functions are helping us with the key Data Transformation verbs.
+
+```{r}
+# Make a new tibble with columns for neighborhood and ID
+# We need to surround Subject ID with backticks `` becuase it has a space in the name
+IETs_nbh <- mutate(IETs, neighborhood = str_sub(`Subject ID`,1,1), 
+                 ID = str_sub(`Subject ID`,2,2))
+
+# Look at the new tibble
+IETs_nbh
+```
+
+We can then use `ggplot` to visualize the difference in IETs across neighborhoods. When we make the ggplot, R will warn us that it removed values that were NA in the data, but this is okay for our purposes and you can ignore it.
+
+```{r}
+# Plot IETs by neighborhood, across all time periods
+ggplot(IETs_nbh) + 
+  geom_boxplot(mapping = aes(x = neighborhood, y = temperature))
+
+```
+
+This plot is interesting and it sort of looks like the IETs from neighborhood 5 are lower than those from the other neighborhoods. However, this plot summarizes the data across all times of day, which might be introducing much more varibility into the range within each neighborhood. 
+
+To get a closer look at differences in IETs by time of day, let's summarize the data within each time period (12am-4am, 4am-8am, etc.) as well. We'll use `mutate()` to grab the time period strings from the `period` column of the IETs_nbh dataset, since they're also attached to the day of the week. We'll use `mutate()` with the function `str_split_fixed()` from the `stringr` package to separate the period strings into two columns - one for day of week (dow) and one for hours (hrs) - at the "comma and space" within each string. 
+
+```{r}
+# Make new columns for day of week (dow), time period (hrs), and am/pm (ampm)
+IETs_nbh_time <- mutate(IETs_nbh, 
+                 dow = str_split_fixed(period, ", ", n = 2)[,1],
+                 hrs = str_split_fixed(period, ", ", n = 2)[,2])
+
+# Look at the new tibble
+IETs_nbh_time
+
+# Plot: what is not ideal about this figure?
+ggplot(IETs_nbh_time) + 
+  geom_boxplot(mapping = aes(x = hrs, y = temperature, color = neighborhood))
+
+```
+
+*Note:* In practice, instead of using `mutate()` twice to create `IETs_nbh` and then `IETs_nbh_time`, we could have done a single `mutate()` function that added all the columns at once, but I broke these apart so that we could focus on individual problems. Whenever you are writing your code, after you get something that works, it's helpful to look back through what you did to see whether you could have combined steps to be more efficient.
+
+We can fix the order of the x-axis categories to be a more intuitive order (instead of alphanumeric sorted) by adding a `scale_x_discrete()` function to ggplot, setting the limits to the order of the categories that we want to display.
+
+```{r}
+# Better Plot
+ggplot(IETs_nbh_time) + 
+  geom_boxplot(mapping = aes(x = hrs, y = temperature, color = neighborhood)) +
+  scale_x_discrete(limits = 
+                     c("12am-4am", "4am-8am", "8am-12pm", "12pm-4pm",
+                       "4pm-8pm", "8pm-12am"))
+
+# New palette of colors
+ggplot(IETs_nbh_time) + 
+  geom_boxplot(mapping = aes(x = hrs, y = temperature, color = neighborhood)) +
+  scale_x_discrete(limits = c("12am-4am", "4am-8am", "8am-12pm", "12pm-4pm", "4pm-8pm", "8pm-12am")) +
+  scale_color_brewer(palette = "Set1")
+
+```
+
+***
+**Code Challenge 4:
+Add the `facet_wrap()` function to the ggplot above to make a separate sub-plot for each day of the week. Are there some days that have much more or much less variability?**
+
+***
+
+## Summarizing differences in IETs by neighborhood by time of day 
+
+In addition to visualizing the IETs dataset, we'll also want to calculate summary statistics to report how much one group was higher/lower than another. To do this, we'll calculate summary statistics for the mean and standard deviation of temperature by neighborhood, and then by neighborhood and time interval. To do this we'll use the `group_by()` function to set the levels at which we'd like to calculate summary statistics and then `summarize()` to actually calculate the statistics. When we're calculating summary stats with `summarize()` you should almost always include `na.rm=TRUE`, which will skip `NA` values in your dataset because the default in R is to return `NA` if it is trying to do a calculation with something that includes `NA` values. We'll calculate the mean and standard deviation, and also include the number of values within each group (this would be the n = ## you would report to show how many replicates your statistics represent).
+
+```{r}
+# GROUP BY NEIGHBORHOOD
+# Group the IETs_nbh_time tibble by neighborhood 
+IETs_nbh_grp <- group_by(IETs_nbh_time, neighborhood)
+
+# Calculate mean temperature & standard deviation of temperature for each neighborhood, for each time period
+IETs_nbh_sum <- summarize(IETs_nbh_grp, Tmean = mean(temperature, na.rm=TRUE),
+                          Tsd = sd(temperature, na.rm=TRUE),
+                          count = n())
+
+# Look at all the neighborhood summary
+IETs_nbh_sum
+
+# GROUP BY NEIGHBORHOOD & TIME PERIOD
+# Group the IETs_nbh_time tibble by neighborhood and hrs
+IETs_nbh_time_grp <- group_by(IETs_nbh_time, neighborhood, hrs)
+
+# Calculate mean temperature & standard deviation of temperature for each neighborhood, for each time period
+IETs_nbh_time_sum <- summarize(IETs_nbh_time_grp, Tmean = mean(temperature, na.rm=TRUE),
+                               Tsd = sd(temperature, na.rm=TRUE),
+                               count = n())
+
+# Look at all the summary stats of neighborhood x time period
+print(IETs_nbh_time_sum, n = 30)
+
+# Arrange tibble to find the warmest time period & neighborhood
+IETs_sum_sort <- arrange(IETs_nbh_time_sum, desc(Tmean))
+
+# Look at tibble
+IETs_sum_sort
+
+```
 
