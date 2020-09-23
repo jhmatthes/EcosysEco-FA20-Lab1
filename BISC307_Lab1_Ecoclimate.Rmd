@@ -35,7 +35,7 @@ load("data/BOSPHO_climate.RData")
 
 ```
 
-When you load the .RData file, this should create an object in your Rstudio "Environment" panel (usually in the upper right box of Rstudio software) called `BOSPHO_climate`. `BOSPHO_climate` is a tibble object; you can see that this tibble has 54,962 rows (observations) and 5 columns (variables). We can take a look at the tibble summary by running:
+When you load the .RData file, this should create an object in your Rstudio "Environment" panel (in the upper right box of Rstudio software) called `BOSPHO_climate`. `BOSPHO_climate` is a data frame object; you can see that this tibble has 54,962 rows (observations) and 5 columns (variables). We can take a look at the tibble summary by running:
 
 ```{r}
 BOS_climate
