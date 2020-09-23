@@ -9,8 +9,10 @@ output:
 
 ### Lab 1 Objectives
 1. Visualize similarities and differences in Phoenix and Boston climates.
-2. Use 30-year climatology to calculate daily departures from "normal" climate.
-3. Quantitatively assess whether Phoenix or Boston weather is more predictable. 
+2. Use 30-year climatology to calculate daily departures from "normal" climate and assess whether Phoenix or Boston weather is more predictable. 
+3. Learn to read messy (i.e., real) csv data files into R.
+4. Use the five tidyverse verbs - filter, arrange, select, mutate, and summarize - as functions to manipulate real data.
+5. Investigate patterns in individually experienced temperatures (IETs) in Phoenix on a sub-daily timescale by neighborhood, age, and income.
 
 ### 1. Introduction: Packages, Data
 In this lab, we'll learn to work with Rstudio to load and visualize a dataset describing the climates of Boston and Phoenix. Our lab objectives for today will build on what you read in preparation for this week's lab, [Sections 3.1-3.6 from the R for Data Science](http://r4ds.had.co.nz/data-visualisation.html#introduction-1) book. 
@@ -365,7 +367,7 @@ ggplot(Bkgd_nbh) + geom_bar(mapping = aes(x = a_q6, fill=neighborhood)) +
 ```
 
 ***
-**Code Challenge 3:
+**Code Challenge 5:
 Create a summary table with the mean income group, mean age group, and number of observations in each, by neighborhood.**
 
 ***
