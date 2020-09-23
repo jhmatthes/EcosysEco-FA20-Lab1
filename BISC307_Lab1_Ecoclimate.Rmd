@@ -290,38 +290,97 @@ Add the `facet_wrap()` function to the ggplot above to make a separate sub-plot 
 
 ## Summarizing differences in IETs by neighborhood by time of day 
 
-In addition to visualizing the IETs dataset, we'll also want to calculate summary statistics to report how much one group was higher/lower than another. To do this, we'll calculate summary statistics for the mean and standard deviation of temperature by neighborhood, and then by neighborhood and time interval. To do this we'll use the `group_by()` function to set the levels at which we'd like to calculate summary statistics and then `summarize()` to actually calculate the statistics. When we're calculating summary stats with `summarize()` you should almost always include `na.rm=TRUE`, which will skip `NA` values in your dataset because the default in R is to return `NA` if it is trying to do a calculation with something that includes `NA` values. We'll calculate the mean and standard deviation, and also include the number of values within each group (this would be the n = ## you would report to show how many replicates your statistics represent).
+In addition to visualizing the IETs dataset, we'll assess summary statistics to report how much one group was higher/lower than another. To do this, we'll calculate the mean and standard deviation of temperature by neighborhood, and then by neighborhood and time interval. We'll use the `group_by()` function to define the grouping variables to calculate summary statistics and then `summarize()` to actually calculate the statistics. When we're calculating summary stats with `summarize()` you should almost always include `na.rm=TRUE`, which will skip `NA` values in your dataset because the default in R is to return `NA` if it is trying to do a calculation with something that includes `NA` values. We'll calculate the mean and standard deviation, and also include the number of values within each group (this would be the n = ## you would report to show how many replicates your statistics represent).
 
 ```{r}
 # GROUP BY NEIGHBORHOOD
-# Group the IETs_nbh_time tibble by neighborhood 
-IETs_nbh_grp <- group_by(IETs_nbh_time, neighborhood)
-
+# Group the IETs_nbh_time tibble by neighborhood
 # Calculate mean temperature & standard deviation of temperature for each neighborhood, for each time period
-IETs_nbh_sum <- summarize(IETs_nbh_grp, Tmean = mean(temperature, na.rm=TRUE),
-                          Tsd = sd(temperature, na.rm=TRUE),
-                          count = n())
+IETs_nbh_sum <- group_by(IETs_nbh_time, neighborhood) %>%
+  summarize(Tmean = mean(temperature, na.rm=TRUE),
+            Tsd = sd(temperature, na.rm=TRUE),
+            count = n())
 
 # Look at all the neighborhood summary
 IETs_nbh_sum
 
 # GROUP BY NEIGHBORHOOD & TIME PERIOD
 # Group the IETs_nbh_time tibble by neighborhood and hrs
-IETs_nbh_time_grp <- group_by(IETs_nbh_time, neighborhood, hrs)
-
 # Calculate mean temperature & standard deviation of temperature for each neighborhood, for each time period
-IETs_nbh_time_sum <- summarize(IETs_nbh_time_grp, Tmean = mean(temperature, na.rm=TRUE),
-                               Tsd = sd(temperature, na.rm=TRUE),
-                               count = n())
+IETs_nbh_time_sum <- group_by(IETs_nbh_time, neighborhood, hrs) %>%
+  summarize(Tmean = mean(temperature, na.rm=TRUE),
+            Tsd = sd(temperature, na.rm=TRUE),
+            count = n())
 
 # Look at all the summary stats of neighborhood x time period
-print(IETs_nbh_time_sum, n = 30)
+IETs_nbh_time_sum
 
 # Arrange tibble to find the warmest time period & neighborhood
 IETs_sum_sort <- arrange(IETs_nbh_time_sum, desc(Tmean))
 
 # Look at tibble
 IETs_sum_sort
+```
+And finally, just like we used `read_csv()` to read data into R, there is a function called `write_csv()` that will write out a csv file. This is a convenient way to be able to include summary statistics in a data frame into documents without having to copy and paste values from Rstudio.
+
+```{r}
+write_csv(IETs_nbh_time_sum, "data/IETs_nbh_time_sum.csv")
+```
+
+### 6. Visualizing differences in neighborhood age and income 
+
+Now we'll focus on using a second dataset from the IETs study, the responses from voluntary participant background surveys collected before the experiment. Remember that the `Bkgd` tibble has a lot of columns because the survey was long, so for these exercises, we'll focus on two sets of survey answers: a_q1 = age and a_q6 = income.
+
+The first thing that we'll have to do with the `Bkgd` data frame before we can start summarizing data by neighborhood is use `mutate()` to break apart the `Subject ID` string and add columns for neighborhood and ID like we did for the IETs data frame. We'll also use the `select()` function to only include the columns for the questions that we're interested in (age and income) to make the data more manageable. We can do this in a single step by connecting the `mutate()` and `select()` functions with a pipe `%>%`. 
+
+```{r}
+# Make new columns for neighborhood and ID, select only survey answers we want
+Bkgd_nbh <- mutate(Bkgd, neighborhood = substr(`Subject ID`,1,1), 
+                   ID = str_sub(`Subject ID`,2,2)) %>%
+  select(neighborhood, ID, a_q1, a_q6)
+
+# Make set of age labels from IET_metadata instead of age classes 1 - 4
+age_labels <- c("1" = "<35", "2" = "35-49", "3" = "50-64", "4" = "65+")
+
+# Plot age class by neighborhood
+ggplot(Bkgd_nbh) + geom_bar(mapping = aes(x = a_q1, fill=neighborhood)) + 
+  scale_x_discrete("Age", limits = age_labels) +
+  scale_fill_brewer(palette = "Blues", direction = -1)
+
+# Different style of geom_bar plot
+ggplot(Bkgd_nbh) + 
+  geom_bar(mapping = aes(x = a_q1, fill=neighborhood), position = "fill") + 
+  scale_x_discrete("Age", limits = age_labels) +
+  scale_fill_brewer(palette = "Blues", direction = -1)
+
+# Make set of income class labels from IET_metadata instead of income classes 1 - 6
+income_labels <- c("1" = "<10k", "2" = "10-30k", "3" = "31-50k", "4" = "51-75k", 
+                   "5" = "76-100k", "6" = "101-150k", "7" = "151-200k", "8" = "200k+")
+
+# Plot income by neighborhood
+ggplot(Bkgd_nbh) + geom_bar(mapping = aes(x = a_q6, fill=neighborhood)) + 
+  scale_x_discrete("Income", limits = income_labels) + 
+  scale_fill_brewer(palette = "Spectral")
 
 ```
+
+***
+**Code Challenge 3:
+Create a summary table with the mean income group, mean age group, and number of observations in each, by neighborhood.**
+
+***
+
+
+***
+**LAB REPORT INSTRUCTIONS:**
+
+* Identify one question that you'd like to investigate with any of the datasets from this lab. 
+
+* As you structure your data analysis to answer your question, produce an .R script pretending that you are starting from scratch (i.e., don't assume that you have anything loaded from doing the lab exercise). The goal is to be able to hand someone your code and be able to have them re-run your analysis to see what you did and how. 
+
+* In addition to your .R script, for the Lab 1 Report you will turn in a text .pdf document no longer than 1 single-spaced page in the format oulined within the Lab Report Guidelines. 
+
+* Your Lab 1 Report document must include at least one ggplot figure and one summary table, which counts toward the 1-page limit. 
+
+***
 
