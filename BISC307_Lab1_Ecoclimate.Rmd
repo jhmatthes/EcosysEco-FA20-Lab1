@@ -62,11 +62,11 @@ Within your group, create a plot that shows the daily precipitation values for B
 
 ### 2. Climatology
 
-The data that we've visualized so far are daily weather data. Now we'll aggregate these data into a climatology to determine whether any one day, month, or year is different from the long-term normal value. To transform weather data into climatology, a 30-year averaging period is typically used because this period captures many years that can vary with cyclical patterns like El Niño. 
+Now we'll aggregate these data into a climatology to determine whether any one day, month, or year is different from the long-term normal value. A 30-year averaging period is typically used in climatology because this period captures many years that can vary with cyclical patterns like El Niño. 
 
 Climatological periods are defined by the World Meteorological Organization as a 30-year interval that starts with a year that ends in a 1 and end on a year that ends on a 0, so the nearest climatological period to 2019 (the last complete year) is 1981-2010. This is called a climatological "normal" because we use it to evaluate whether any particular value is different from normal conditions. 
 
-The first step for our climatology is to clip our data to 1981-2010. To do this, we'll use the `filter()` function from the `tidyverse` package. Almost all of the `tidyverse` data processing functions have a similar structure to arguments:
+The first step for our climatology is to clip our data to 1981-2010. To do this, we'll use the `filter()` function from the `tidyverse` package. Almost all of the `tidyverse` data processing functions have a similar structure to arguments (you'll read more about these in detail in PreLab 2):
 
 1. The first argument is the data frame we're using.
 2. The second argument describes how we'd like to change the data. 
@@ -84,7 +84,7 @@ ggplot(data = BOS_climrecent) +
 
 ```
 
-The next step is to take the 30-year average for maximum temperature on each day. We'll do this with a set of three functions: 
+The next step is to take the 30-year average for maximum temperature on each day. We'll do this with a set of three functions from the `tidyverse`: 
 
 1. `mutate()` to add a column with just the month & day for each date (removing year)
 2. `group_by()` to define the month-day column as the grouping variable
@@ -185,9 +185,9 @@ PHO_tmaxDiff <- PHO_climate %>%
 
 ### 3. Weather predictability
 
-Departures from mean climate can influence ecology and can have important effects on human health. For example, in Boston our infrastructure is built to handle large amounts of snow during the winter, but the same sized snowstorm further South could bring things to a standstill for days. Similarly, heat stress is an important factor when considering climate change: if infrastructure is built for a particular temperature within a city, unexpected temperature departures can have devastating impacts for people who cannot quickly adjust temperature conditions in their homes. 
+Departures from mean climate are important for ecology, including human health. For example, in Boston our infrastructure is built to handle large amounts of snow during the winter, but the same sized snowstorm further South could bring things to a standstill for days. Similarly, heat stress is an important factor when considering climate change: if infrastructure is built for a particular temperature within a city, unexpected temperature departures can have devastating impacts for people who cannot quickly adjust temperature conditions in their homes. 
 
-We can assess the predictability of weather within a location by comparing daily weather to the 30-year climatology. We’ll unpredictability as larger deviations from the mean climatology. We've already calculated the difference between daily maximum temperatures and their 30-year average. To visualize this difference, we can look at a probability density of the departures from the long-term average: 
+We can assess the predictability of weather within a location by comparing daily weather to the 30-year climatology. We’ll define unpredictability as larger deviations from the mean climatology. We've already calculated the difference between daily maximum temperatures and their 30-year average. To visualize this difference, we can look at a probability density of the departures from the long-term average: 
 
 ```{r}
 # Plot Boston difference from climatological maximum temperature, 1981-2010
@@ -206,7 +206,7 @@ quantile(BOS_tmaxDiff$tmax_diff, c(0.05, 0.95)) # 5% tails of the probability va
 
 ```
 
-The above plot and quantile calculation shows that in Boston, there about a 5% chance of having a day that is about 14-15 degrees warmer or colder than average. This is a  small but non-negligible probability. We can use the probability density for Boston maximum temperature departures as a benchmark to assess whether Phoenix's maximum temperatures are more or less predictable than Boston's. 
+The above plot and quantile calculation shows that in Boston, there about a 5% chance of having a day that is about 14-15 degrees warmer or colder than average. This is a small but non-negligible probability. We can use the probability density for Boston maximum temperature departures as a benchmark to assess whether Phoenix's maximum temperatures are more or less predictable than Boston's. 
 
 ***
 **Code Challenge 3:
@@ -215,9 +215,9 @@ Produce a plot that shows the probability density for the difference between dai
 ***
 
 ### 4. Individually Exerienced Temperatures (IETs) 
-Now we'll investigate a [dataset](https://doi.org/10.6073/pasta/cba2173a40671a8a350c772f3da3214f) of Individually Exerienced Temperatures (IETs) from the [Central Arizona-Phoenix (CAP) Long-Term Ecological Research (LTER) site](https://sustainability.asu.edu/caplter/). You can read more details about the functions that we'll use here in the sections on Data Transformation, [Sections 5.1-5.6 from the R for Data Science book](http://r4ds.had.co.nz/transform.html). 
+Now we'll investigate a [dataset](https://doi.org/10.6073/pasta/cba2173a40671a8a350c772f3da3214f) of Individually Exerienced Temperatures (IETs) from the [Central Arizona-Phoenix (CAP) Long-Term Ecological Research (LTER) site](https://sustainability.asu.edu/caplter/). You can read more details about the functions that we'll use here in the sections on Data Transformation, [Sections 5.1-5.6 from the R for Data Science book](http://r4ds.had.co.nz/transform.html), which you'll work with in PreLab 2. 
 
-The IETs data are stored as `.csv` files, which stands for comma-separated values. `csv` files are a plain text format for storing tabular data, such as spreadsheets, and because they are plain text (e.g. in contrast to an Excel workbook) they are more reproducible because you can open files with any computer text editor. You can also store Excel and Google sheets as `csv` files, which is the preferred storage format for reproducible research because it is more stable as versions of Excel and Google sheets softwares change.
+The IETs data are stored as `.csv` files, which stands for comma-separated values. `csv` files are a plain text format for storing spreadsheets, and because they are plain text (for example in contrast to an Excel workbook) they are more reproducible because you can open files with any computer text editor. You can also store Excel and Google sheets as `csv` files, which is the preferred storage format for reproducible research because versions of Excel and Google sheets softwares change.
 
 To load a csv file into Rstudio, we'll use `read_csv()` from the `tidyverse`. R also has a base function called `read.csv()` that doesn't require the `tidyverse` package, but `read_csv()` has a few advantages here. Helpfully, `read_csv()` preserves data classes, and recognizes dates and times.
 
@@ -230,39 +230,33 @@ library(stringr)
 # Read IETs csv file into an object called IETs
 IETs <- read_csv("data/647_IET_measurements_50e72be656c7407bd07e316061beeb1d.csv")
 
-# Read background survey csv file into an object called Bkgd
-Bkgd <- read_csv("data/647_background_surveys_546a5d337c7a39922a4b65ced4bb29fe.csv")
-
-# Look at the IETs and Bkgd tibbles to see what the data look like
+# Look at the IETs data frame to see what the data look like
 IETs
-Bkgd
+
 ```
-
-The two data frames are linked by the `Subject ID`, where the first number in each `Subject ID` corresponds to a neighborhood, and the letter is a unique participant from that neighborhood. 
-
-The columns in the IETs data frame are rather straightforward, but there are LOTS of columns in the Bkgd data frame that correspond to survey answers for individual questions. We'll focus on three of these columns in this lab, but you'll need to read the `IET_metadata.txt` file if you'd like to use information from additional questions. 
+There are LOTS of data about participant background characteristics (on age, income, race, etc.) that correspond to individual survey questions. If you'd like to extend this lab for your final project, you can read the `IET_metadata.txt` to incorporate data from this study to the IETs, but for now we'll focus on differences by neighborhood and time of day. 
 
 ### 5. Visualizing differences in IETs by neighborhood and time of day 
 
-First we'll examine the differences in IETs grouped by neighborhood. First we need to use the tidyverse Data Transformation verbs to get the data in the right format. The IETs column for `Subject ID` includes the neighborhood, but is also stuck to the participant ID within each neighborhood. If we want to group data by neighborhood, we need to use `mutate()` to create a new data frame column with just neighborhood, and while we're at it, we'll also create a new column with just participant ID. 
+First we'll examine the differences in IETs grouped by neighborhood using the `tidyverse` Data Transformation verbs. The IETs column for `Subject ID` includes the neighborhood, but is stuck to the participant ID within each neighborhood. To group data by neighborhood, we'll use `mutate()` to create a new column with just neighborhood and second new column with just participant ID. 
 
-To separate out the neighborhood piece of the `Subject ID` from the participant ID, we'll use a function called string subset `str_sub()` from the `stringr` package. This function clips a string (a set of letters or characters) based on the numeric order of letters within that string. For example, the `Subject ID` string in the first row of the IETs tibble is `1A`, where we want to clip out the first character `1` into the new neighborhood column and the second character `A` into the new ID column. 
+To separate the neighborhood from `Subject ID`, we'll use a function called string subset `str_sub()` from the `stringr` package. This function clips out a string (a set of letters or characters) based on location of the clip. For example, the `Subject ID` string in the first row of the IETs data frame is `1A`, where we want to clip out the first character `1` (location 1) into the new neighborhood column and the second character `A` (location 2) into the new ID column. 
 
-We'll use these `stringr` functions in this lab, but you shouldn't worry about understanding all the details: the main point of this lab is to focus on the use of the data transformation verbs, but we can't avoid cleaning things up with stringr in order to use this dataset. Remember that learning R is like learning a new language, and you can think about the `stringr` commands in this lab as an immersion experience where you might not understand every detail, but can focus on the purpose of how these functions are helping us with the key Data Transformation verbs.
+We'll use these `stringr` functions now, but you shouldn't worry about understanding all the details: the main point of this part of lab is to plot and be exposed to the data transformation verbs, but we can't avoid `stringr` in order to use this dataset. Remember that learning R is like learning a new language, and you can think about the `stringr` commands in this lab as an immersion experience where you might not understand every detail, but can focus on the purpose of how these functions are helping us to tidy the data.
 
 ```{r}
-# Make a new tibble with columns for neighborhood and ID
-# We need to surround Subject ID with backticks `` because it has a space in the name
-# str_sub(column name, from character, to character)
+# Make a new data frame with columns for neighborhood and ID
+# We need to surround Subject ID with backticks `` (to the left of the 1 on your computer keyboard) in mutate because it has a space in the name
+# Function str_sub(column name, from character, to character)
 IETs_nbh <- mutate(IETs, 
                    neighborhood = str_sub(`Subject ID`,1,1),
                    ID = str_sub(`Subject ID`,2,2))
 
-# Look at the new tibble
+# Look at the new data frame
 IETs_nbh
 ```
 
-Now we can use `ggplot` to visualize IETs across neighborhoods. When we make the ggplot, R will warn us that it removed values that were NA in the data, but this is okay for our purposes.
+Now we can use `ggplot` to visualize IETs across the five neighborhoods. When we make the ggplot, R will warn us that it removed values that were NA in the data, but this is okay for our purposes.
 
 ```{r}
 # Plot IETs by neighborhood, across all time periods
@@ -271,9 +265,9 @@ ggplot(IETs_nbh) +
 
 ```
 
-In this plot it sort of looks like the IETs from neighborhood 5 are lower than those from the other neighborhoods. However, this plot summarizes the data across all times of day, which could introduce varibility into the range within each neighborhood. 
+It sort of looks like the IETs from neighborhood 5 are lower than those from the other neighborhoods. However, this plot summarizes the data across all times of day, which could introduce varibility into this relationship. 
 
-To look at differences in IETs by time of day, we'll summarize the data by each time period (12am-4am, 4am-8am, etc.) as well. We'll use `mutate()` to separate the time period strings and day of the week from the `period` column of `IETs_nbh`. We'll use the function `str_split_fixed()` from the `stringr` package to separate the period strings into two columns - one for day of week (dow) and one for hours (hrs) - at the "comma and space" within each string. 
+To look at differences in IETs by time of day, we'll summarize the data by each time period (12am-4am, 4am-8am, etc.). Like we did for `Subject ID`, we'll use `mutate()` to separate the time period and day of the week from the `period` column of `IETs_nbh`. We'll use the function `str_split_fixed()` from the `stringr` package to separate the period strings into two columns - one for day of week (dow) and one for hours (hrs) - at the ", " within each string. 
 
 ```{r}
 # Make new columns for day of week (dow) and time period (hrs)
@@ -283,7 +277,7 @@ IETs_nbh_time <- mutate(IETs_nbh,
                  dow = str_split_fixed(period, ", ", n = 2)[,1],
                  hrs = str_split_fixed(period, ", ", n = 2)[,2])
 
-# Look at the new tibble
+# Look at the new data frame
 IETs_nbh_time
 
 # Plot: what is not ideal about this figure?
@@ -292,9 +286,9 @@ ggplot(IETs_nbh_time) +
 
 ```
 
-*Note:* In practice, instead of using `mutate()` twice to create `IETs_nbh` and then `IETs_nbh_time`, we could have done a single `mutate()` function that added all the columns at once, but I broke these apart so that we could focus on individual steps. Whenever you are writing your code, after you get something that works, it's helpful to look back through what you did to see whether you could have combined steps to be more efficient with pipes `%>%`. 
+*Note:* In practice, instead of using `mutate()` twice to create `IETs_nbh` and then `IETs_nbh_time`, we could have done a single `mutate()` function that added all the columns at once, but I broke these apart so that we could focus on individual steps. Whenever you are writing your code, after you get something that works, it's helpful to look back through what you did to see whether you could have combined steps to be more efficient with pipes `%>%` or by using a function only once. 
 
-We can fix the order of the x-axis categories to be a more intuitive order (instead of alphanumeric sorted) by adding a `scale_x_discrete()` function to ggplot, setting the limits to the order of the categories that we want to display.
+We can fix the order of the x-axis categories to be sorted by time (instead of alphanumeric sorted) by adding a `scale_x_discrete()` function to ggplot. This will redefine the order of the categories that we want to display.
 
 ```{r}
 # Better Plot
@@ -304,29 +298,26 @@ ggplot(IETs_nbh_time) +
                      c("12am-4am", "4am-8am", "8am-12pm", "12pm-4pm",
                        "4pm-8pm", "8pm-12am"))
 
-# New palette of colors
+# New palette of colors, add axis labels, and a cleaner theme
 ggplot(IETs_nbh_time) + 
   geom_boxplot(mapping = aes(x = hrs, y = temperature, color = neighborhood)) +
   scale_x_discrete(limits = c("12am-4am", "4am-8am", "8am-12pm", "12pm-4pm", "4pm-8pm", "8pm-12am")) +
-  scale_color_brewer(palette = "Set1")
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "Time period", y = "Temperature (C)") +
+  theme_bw()
 
 ```
 
-***
-**Code Challenge 4:
-Add the `facet_wrap()` function to the ggplot above to make a separate sub-plot for each day of the week. Are there some days that have more or less variability?**
-
-***
 
 ## Summarizing differences in IETs by neighborhood by time of day 
 
-In addition to visualizing the IETs dataset, we'll calculate summary statistics to report how much higher/lower one group was than another. To do this, we'll calculate the mean and standard deviation of temperature by neighborhood, and then by neighborhood and time interval. 
+It's often helpful to have summary statistics to report how much higher/lower one group was than another. To do this, we'll calculate the mean and standard deviation of temperature by neighborhood, and then by neighborhood and time interval. 
 
-We'll use the `group_by()` function to define the grouping variables to calculate summary statistics and then `summarize()` to actually calculate the statistics. When we're calculating summary stats with `summarize()` you should almost always include `na.rm=TRUE`, which will skip `NA` values (missing values) in your dataset. The default in R is to be cautious and return `NA` if you're doing a calculation with something that includes `NA` values. We'll calculate the mean and standard deviation, and include the number of values within each group (this would be the n = ## you would report to show how many replicates your statistics represent).
+We'll use the `group_by()` function to define the grouping variables to calculate summary statistics and then `summarize()` to actually calculate the statistics. When we're calculating summary stats with `summarize()` you should always think about including `na.rm=TRUE`, which will skip `NA` values (missing values) in your dataset. The default in R is to be cautious and return `NA` if you're doing a calculation with something that includes even one `NA` value. We'll calculate the mean and standard deviation, and include the number of values within each group (this would be the n = ## you would report to show how many replicates your statistics represent).
 
 ```{r}
 # GROUP BY NEIGHBORHOOD
-# Group the IETs_nbh_time tibble by neighborhood
+# Group the IETs_nbh_time data frame by neighborhood
 # Calculate mean temperature & standard deviation of temperature for each neighborhood, for each time period, and count the number of non-NA values
 IETs_nbh_sum <- group_by(IETs_nbh_time, neighborhood) %>%
   summarize(Tmean = mean(temperature, na.rm=TRUE),
@@ -337,7 +328,7 @@ IETs_nbh_sum <- group_by(IETs_nbh_time, neighborhood) %>%
 IETs_nbh_sum
 
 # GROUP BY NEIGHBORHOOD & TIME PERIOD
-# Group the IETs_nbh_time tibble by neighborhood and hrs
+# Group the IETs_nbh_time data frame by neighborhood and hrs
 # Calculate mean temperature & standard deviation of temperature for each neighborhood, for each time period
 IETs_nbh_time_sum <- group_by(IETs_nbh_time, neighborhood, hrs) %>%
   summarize(Tmean = mean(temperature, na.rm=TRUE),
@@ -347,10 +338,10 @@ IETs_nbh_time_sum <- group_by(IETs_nbh_time, neighborhood, hrs) %>%
 # Look at all the summary stats of neighborhood x time period
 IETs_nbh_time_sum
 
-# Arrange tibble to find the warmest time period & neighborhood
+# Arrange data frame to find the warmest time period & neighborhood
 IETs_sum_sort <- arrange(IETs_nbh_time_sum, desc(Tmean))
 
-# Look at tibble
+# Look at data frame
 IETs_sum_sort
 ```
 And finally, just like we used `read_csv()` to read data into R, there is a function called `write_csv()` that will write out a csv file. This is a potentially convenient way to save a table of summary statistics.
@@ -359,48 +350,37 @@ And finally, just like we used `read_csv()` to read data into R, there is a func
 write_csv(IETs_nbh_time_sum, "data/IETs_nbh_time_sum.csv")
 ```
 
-### 6. Visualizing differences in neighborhood age and income 
+## Using an ANOVA test for signficiant differences by time of day
 
-Now we'll use the responses from voluntary participant background surveys collected before the experiment. Remember that the `Bkgd` data frame has a lot of columns because the survey was long, so for these exercises, we'll focus on two sets of survey answers: a_q1 = age and a_q6 = income.
+We can also conduct statistical tests with R, for example an Analysis of Variance (ANOVA), which could help us to test the hypothesis that the IETs should be significantly different by time of day using the `IETs_nbh_time` data frame. 
 
-The first thing that we'll have to do with the `Bkgd` data frame is to use `mutate()` to break apart the `Subject ID` string and add columns for neighborhood and ID like we did for the IETs data frame. We'll also use the `select()` function to only include the columns for the questions that we're interested in (age and income) to make the data more manageable. We can do this in a single step by connecting the `mutate()` and `select()` functions with a pipe `%>%`. 
+For the 
 
 ```{r}
-# Make new columns for neighborhood and ID, select only survey answers we want
-Bkgd_nbh <- mutate(Bkgd, neighborhood = substr(`Subject ID`,1,1), 
-                   ID = str_sub(`Subject ID`,2,2)) %>%
-  select(neighborhood, ID, a_q1, a_q6)
+# Estimate an ANOVA model for the effect of the hrs group on temperature
+aov_IETstime <- aov(temperature ~ hrs, data = IETs_nbh_time)
 
-# Make set of age labels from IET_metadata instead of age classes 1 - 4
-age_labels <- c("1" = "<35", "2" = "35-49", "3" = "50-64", "4" = "65+")
-
-# Plot age class by neighborhood
-ggplot(Bkgd_nbh) + geom_bar(mapping = aes(x = a_q1, fill=neighborhood)) + 
-  scale_x_discrete("Age", limits = age_labels) +
-  scale_fill_brewer(palette = "Blues", direction = -1)
-
-# Different style of geom_bar plot
-ggplot(Bkgd_nbh) + 
-  geom_bar(mapping = aes(x = a_q1, fill=neighborhood), position = "fill") + 
-  scale_x_discrete("Age", limits = age_labels) +
-  scale_fill_brewer(palette = "Blues", direction = -1)
-
-# Make set of income class labels from IET_metadata instead of income classes 1 - 6
-income_labels <- c("1" = "<10k", "2" = "10-30k", "3" = "31-50k", "4" = "51-75k", 
-                   "5" = "76-100k", "6" = "101-150k", "7" = "151-200k", "8" = "200k+")
-
-# Plot income by neighborhood
-ggplot(Bkgd_nbh) + geom_bar(mapping = aes(x = a_q6, fill=neighborhood)) + 
-  scale_x_discrete("Income", limits = income_labels) + 
-  scale_fill_brewer(palette = "Spectral")
-
+# Look at summary output from the ANOVA test 
+summary(aov_IETstime)
 ```
 
-***
-**Code Challenge 5:
-Create a summary table with the mean income group, mean age group, and number of observations (i.e. count) in each, by neighborhood.**
+We can see that there is a significant overall effect of the time of day on temperature, from the fact that the p-value (in the `Pr(>F)` column) is less than 0.0001. 
 
-***
+After seeing the overall estimated ANOVA model it is often helpful to compare each different time of day to the overall mean to see which times of day are significantly higher/lower than others. To do this we can do a Tukey Honest Significant Difference (HSD) test. 
+
+```{r}
+# Run Tukey HSD test on estimated ANOVA model
+TukeyHSD(aov_IETstime)
+```
+
+It's a little hard to read through all the comparisons, but we can see that most of them are significant. An alternative to the output presentation from the default `Tukey_HSD()` function is the `HSD.test()` in the `agricolae` package (you'll need to run `install.packages("agricolae)` the first time). 
+```{r}
+# Running the Tukey HSD test with agricolae
+library(agricolae)
+aov_IETstime <- HSD.test(aov_IETstime, trt = "hrs", alpha = 0.05)
+aov_IETstime
+```
+If you scroll down to the `$groups` in the summary output, you can see that this version of the test separates significant groups with letters (a-d in this case), where different letters are significantly different groups. 
 
 
 ***
@@ -410,9 +390,9 @@ Create a summary table with the mean income group, mean age group, and number of
 
 * As you structure your data analysis to answer your question, produce an .R script pretending that you are starting from scratch (i.e., don't assume that you have anything loaded from doing this lab exercise). The goal is to be able to hand someone your code and be able to have them re-run your analysis to see what you did and how. When you've finished writing your .R script, you should "Push" your respository back to GitHub following the [instructions here](https://docs.google.com/document/d/1VbVZXhnzJUY9gJbHiMn75hc8r8_zgJXct6ugEPH-Eh8/edit?usp=sharing).
 
-* In addition to your .R script that you push to GitHub to submit, for the Lab 1 Report you will turn in a text .pdf document no longer than 2 single-spaced pages in the format oulined within the [Lab Report Guidelines](https://docs.google.com/document/d/1BP7JYDuru8hdvQbqYwJ1s6pUWiVkBI9hmGoX8qB2eqA/edit?usp=sharing). 
+* In addition to your .R script that you push to GitHub to submit, for the Lab 1 Report you will turn in a text .pdf document no longer than 2 single-spaced pages (it can be shorter!) in the format oulined within the [Lab Report Guidelines](https://docs.google.com/document/d/1BP7JYDuru8hdvQbqYwJ1s6pUWiVkBI9hmGoX8qB2eqA/edit?usp=sharing). 
 
-* Your Lab 1 Report document must include at least one ggplot figure and one summary statistic that you calculated with `group_by` and `summarize`, which counts toward the 2-page limit. 
+* Your Lab 1 Report document must include at least one ggplot figure and one summary statistic that you calculated with `group_by` and `summarize`, which counts toward the 2-page limit. You may include an ANOVA test, but you are not required to report a statistical test in this lab report.
 
 ***
 
